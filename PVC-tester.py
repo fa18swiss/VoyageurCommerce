@@ -18,7 +18,7 @@ v0.3, hatem Ghorbel, HE-Arc
 # Ces modules doivent être dans le PYTHONPATH; p.ex. dans le répertoire courant
 
 modules = (
-    "MAA09",
+    "ChetelatLaville",
     # Éventuellement d'autres modules pour comparer plusieurs versions...
 )
 
