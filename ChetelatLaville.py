@@ -21,15 +21,21 @@ class Ville:
 
     def __repr__(self):
         return "'%s' (%d, %d)" % (self.__name, self.__x, self.__y)
-
-class Probleme:
-    def __init__(self, villes):
-        self.__villes = villes
+    def distance(self, other):
+        #todo
+        return 0
+    def mutate(self):
+        #todo
+        return None
 
 class Solution:
     def __init__(self, villes):
         self.__villes = villes
         self.__distance = 0
+    def distance(self):
+        #todo
+        pass
+
 
 
 def ga_solve(file=None, gui=True, maxtime=0):
