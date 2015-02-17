@@ -40,6 +40,11 @@ class Solution:
    def __init__(self, villes):
       self.__villes = villes
       self.__distance = 0
+   def getDistance(self):
+      if self.__distance <= 0:
+         self.distance()
+      return self.__distance
+
    def distance(self):
       distance = 0
       precedente = self.__villes[-1]
@@ -59,12 +64,7 @@ def construirePopulation(villes):
 
 def elitisme(solutions):
    def comp(sol1,sol2):
-      if sol1.distance < sol2.distance:
-         return -1
-      elif sol1.distance > sol2.distance:
-         return 1
-      else:
-         return 0
+      return sol1.getDistance() - sol2.getDistance()
 
    solutionsSorted = list(solutions)
    solutionsSorted.sort(comp)
