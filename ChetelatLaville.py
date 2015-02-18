@@ -242,7 +242,7 @@ def main():
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--no-gui",  help="no graphical user interface", action="store_true")
-    parser.add_argument("--maxTime", help="max execution time", type=int)
+    parser.add_argument("--maxTime", help="max execution time (seconds)", type=int)
     parser.add_argument("filename",  help="file of cities", nargs='?')
     args = parser.parse_args()
 
