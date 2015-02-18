@@ -234,33 +234,20 @@ def ga_solve(file=None, gui=True, maxTime=None):
         if event.type == KEYDOWN or event.type == QUIT: break
     if gui:
         print("end with %s" % bestSolution)
-    print("i(%d)" % i)
+    print("%d;" % i, end="")
     return bestSolution.getDistance(), [v.name() for v in bestSolution.getVilles()]
 
 def main():
     import sys
-    gui = True
-    maxtime = 0
-    filename = None
-    nextismaxtime = False
-    for arg in sys.argv[1:]:
-        print("arg = '%s'" % arg)
-        if arg == "--no-gui":
-            nextismaxtime = False
-            gui = False
-        elif arg == "--maxTime":
-            nextismaxtime = True
-        elif nextismaxtime:
-            maxtime = int(arg)
-            nextismaxtime = False
-        else:
-            if filename:
-                print("Two filename define !")
-                sys.exit(0)
-            filename = arg
-    ga_solve(filename, gui, maxtime)
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--no-gui",  help="no graphical user interface", action="store_true")
+    parser.add_argument("--maxTime", help="max execution time", type=int)
+    parser.add_argument("filename",  help="file of cities", nargs='?')
+    args = parser.parse_args()
 
-
+    dist, cities = ga_solve(args.filename, not args.no_gui, args.maxTime)
+    print("Solve distance = %d" % dist)
 
 if __name__ == "__main__":
     main()
