@@ -7,7 +7,7 @@ Permet de lancer automatiquement une série de solveurs sur une série de problème
 et génère une grille de résultats au format CSV.
 
 v0.2, Matthieu Amiguet, HE-Arc
-v0.3, hatem Ghorbel, HE-Arc
+v0.3, Hatem Ghorbel, HE-Arc
 '''
 
 # PARAMETRES
@@ -28,12 +28,12 @@ modules = (
 # <maxtime> le temps (en secondes) imparti pour la résolution
 tests = (
     ('data/pb005.txt',1),
-    #~ ('data/pb010.txt',5),
-    #~ ('data/pb010.txt',10),
-    #~ ('data/pb050.txt',30),
-    #~ ('data/pb050.txt',60),
-    #~ ('data/pb100.txt',20),
-    #~ ('data/pb100.txt',90),
+    ('data/pb010.txt',5),
+    ('data/pb010.txt',10),
+    ('data/pb050.txt',30),
+    ('data/pb050.txt',60),
+    ('data/pb100.txt',20),
+    ('data/pb100.txt',90),
 )
 
 # On tolère un dépassement de 5% du temps imparti:
@@ -72,17 +72,17 @@ def validate(filename, length, path, duration, maxtime):
     if duration>maxtime * (1+tolerance):
         error += "Timeout (%.2f) " % (duration-maxtime)
     try:
-        cities = dict([(name, (int(x),int(y))) for name,x,y in [l.split() for l in file(filename)]])
-    except:
+        cities = dict([(name, (int(x),int(y))) for name,x,y in [l.split() for l in open(filename)]])
+    except Exception as e:
+        print(e)
         return "(Validation failed...)"
-    tovisit = cities.keys()
-    
+    tovisit = list(cities.keys())
     try:
         totaldist = 0
         for (ci, cj) in zip(path, path[1:] +path[0:1]):
-            totaldist += dist(cities[ci],cities[cj])
+            totaldist += dist(cities[ci][0],cities[ci][1],cities[cj][0],cities[cj][1])
             tovisit.remove(ci)
-            
+
         if int(totaldist) != int(length):
             error += "Wrong dist! (%d instead of %d)" % (length, totaldist)
     except KeyError:
@@ -91,7 +91,7 @@ def validate(filename, length, path, duration, maxtime):
         error += "City %s appears twice in %r! " % (ci, path)
     except Exception as e:
         error += "Error during validation: %r" % e
-    
+
     if tovisit:
         error += "Not all cities visited! %r" % tovisit
     
