@@ -1,7 +1,10 @@
 __author__ = 'Chetelat Laville'
 
 import math
-from random import shuffle
+import random
+import time
+
+random.seed()
 
 nbSolution = 10
 
@@ -28,13 +31,9 @@ class Ville:
         return "'%s' (%d, %d)" % (self.__name, self.__x, self.__y)
 
     def distance(self, other):
-        distance1 = math.sqrt(self.__x * self.__x + self.__y*self.__y)
-        distance2 = math.sqrt(other.__x * other.__x + other.__y*other.__y)
-        return math.fabs(distance1 - distance2)
-
-def mutate(self):
-    #todo
-    return None
+        dx = self.__x - other.__x
+        dy = self.__y - other.__y
+        return math.sqrt(dx * dx + dy * dy)
 
 class Solution:
     idSeq = 1
@@ -60,6 +59,7 @@ class Solution:
             precedente = ville
         self.__distance = distance
         return self.__distance
+
     def __repr__(self):
         return "Solution id = %d distance %d" %(self.__id, self.getDistance())
 
@@ -70,7 +70,9 @@ def construirePopulation(villes):
         villesSolution = list(villes)
         #print("villes before =", end="")
         #print(villesSolution)
-        shuffle(villesSolution)
+        random.shuffle(villesSolution)
+
+
         #print("villes after =", end="")
         #print(villesSolution)
         solutions.append(Solution(villesSolution))
@@ -80,25 +82,50 @@ def mutate(solutions):
     newSols = []
     for solution in solutions:
         villesSolution = list(solution.getVilles())
-        shuffle(villesSolution)
+        size = len(villesSolution)
+        nbChange = random.randrange(int(size / 10.0 + 1)) + 1
+        for i in range(nbChange):
+            v1 = v2 = random.randrange(size)
+            while v1 == v2:
+                v2 = random.randrange(size)
+            onlySwap2 = random.randrange(2) == 0
+            #print(onlySwap2)
+            if onlySwap2:
+                villesSolution[v1], villesSolution[v2] = villesSolution[v2], villesSolution[v1]
+            else:
+                #check v1 < v2
+                if v1 > v2:
+                    v1, v2 = v2, v1
+                while v1 < v2:
+                    villesSolution[v1], villesSolution[v2] = villesSolution[v2], villesSolution[v1]
+                    v1 += 1
+                    v2 -= 1
+
+            #print("v1(%d), v2(%d)" % (v1, v2))
         newSols.append(Solution(villesSolution))
     return newSols + solutions
 
 def elitisme(solutions):
-    def comp(sol1):
-        return sol1.getDistance()
-    print("befire :")
-    print(solutions)
+    #print("befire :")
+    #print(solutions)
     solutionsSorted = list(solutions)
     solutionsSorted.sort(key=lambda sol: sol.getDistance())
-    print("after")
-    print(solutionsSorted)
+    #print("after")
+    #print(solutionsSorted)
     return solutionsSorted[0:int(len(solutionsSorted)/2)]
 
-def ga_solve(file=None, gui=True, maxtime=0):
-    if file == None and gui == False:
-        raise Exception("No file and no gui !")
+def ga_solve(file=None, gui=True, maxTime=None):
 
+    #gui = False
+    #file = "data/pb010.txt"
+    #maxTime = 5
+
+
+    limitTime = None
+    if maxTime:
+        limitTime = maxTime + time.time()
+    if not file and not gui:
+        raise Exception("No file and no gui !")
 
     import pygame
     from pygame.locals import KEYDOWN, QUIT, MOUSEBUTTONDOWN, K_RETURN, K_ESCAPE
@@ -107,17 +134,18 @@ def ga_solve(file=None, gui=True, maxtime=0):
     screen_x = 500
     screen_y = 500
 
-    city_color = [10,10,200] # blue
-    city_radius = 3
 
-    font_color = [255,255,255] # white
+    if gui:
+        city_color = [10,10,200] # blue
+        city_radius = 3
 
-    pygame.init()
-    window = pygame.display.set_mode((screen_x, screen_y))
-    pygame.display.set_caption('Exemple')
-    screen = pygame.display.get_surface()
-    font = pygame.font.Font(None,30)
-    font_city = pygame.font.Font(None,20)
+        font_color = [255,255,255] # white
+        pygame.init()
+        window = pygame.display.set_mode((screen_x, screen_y))
+        pygame.display.set_caption('Exemple')
+        screen = pygame.display.get_surface()
+        font = pygame.font.Font(None,30)
+        font_city = pygame.font.Font(None,20)
 
     def draw(villes):
         screen.fill(0)
@@ -128,21 +156,28 @@ def ga_solve(file=None, gui=True, maxtime=0):
         textRect = text.get_rect()
         screen.blit(text, textRect)
         pygame.display.flip()
+    def drawSol(solution, i):
+        cities = solution.getVilles()
+        screen.fill(0)
+        for ville in cities:
+            screen.blit(font_city.render(str(ville), True, font_color, ), ville.pos())
+            pygame.draw.circle(screen,city_color,ville.pos(),city_radius)
+        pygame.draw.lines(screen,city_color,True,[city.pos() for city in cities])
+        text = font.render("%d %s" % (i, repr(bestSolution)), True, font_color)
+        textRect = text.get_rect()
+        screen.blit(text, textRect)
+        pygame.display.flip()
 
     cities = []
-    draw(cities)
-
     if file:
-        #todo loades cities from file
         fileReader = open(file, "r")
         for line in fileReader:
             line = line.replace("\n", "")
-            print("Line : " + line)
+            #print("Line : " + line)
             parts = line.split(" ")
             pos = (int(parts[1]), int(parts[2]))
             cities.append(Ville(parts[0], pos))
-            pass
-        print(cities)
+        #print(cities)
         fileReader.close()
     else:
         citiesIndex = 0
@@ -157,6 +192,8 @@ def ga_solve(file=None, gui=True, maxtime=0):
                     citiesIndex += 1
                     cities.append(Ville("v%d" % citiesIndex, pygame.mouse.get_pos()))
                     draw(cities)
+
+
     if len(cities) == 0:
         print("Pas de villes !")
         #todo MggBox
@@ -164,7 +201,11 @@ def ga_solve(file=None, gui=True, maxtime=0):
 
     solutions = None
 
-    for i in range(10):
+    continueLoop = True
+    i = 1
+    lastBestSolDist = float("inf")
+    nbSolEquals = 0
+    while continueLoop:
         if solutions:
             solutions = mutate(solutions)
         else:
@@ -172,25 +213,34 @@ def ga_solve(file=None, gui=True, maxtime=0):
 
         solutions = elitisme(solutions)
         bestSolution = solutions[0]
-        cities = bestSolution.getVilles();
-        screen.fill(0)
-        for ville in cities:
-            screen.blit(font_city.render(str(ville), True, font_color, ), ville.pos())
-            pygame.draw.circle(screen,city_color,ville.pos(),city_radius)
-        pygame.draw.lines(screen,city_color,True,[city.pos() for city in cities])
-        text = font.render(repr(bestSolution), True, font_color)
-        textRect = text.get_rect()
-        screen.blit(text, textRect)
-        pygame.display.flip()
+        #print(bestSolution)
+        if gui:
+            drawSol(bestSolution, i)
+        if limitTime:
+            if time.time() > limitTime:
+                continueLoop = False
+        else:
+            if lastBestSolDist == bestSolution.getDistance():
+                nbSolEquals += 1
+                if nbSolEquals > 1000:
+                    continueLoop = False
+            else:
+                nbSolEquals = 0
+            lastBestSolDist = bestSolution.getDistance()
 
-    while True:
+        i += 1
+    while gui:
         event = pygame.event.wait()
         if event.type == KEYDOWN or event.type == QUIT: break
+    if gui:
+        print("end with %s" % bestSolution)
+    print("i(%d)" % i)
+    return bestSolution.getDistance(), [v.name() for v in bestSolution.getVilles()]
 
 def main():
     import sys
-    gui = None
-    maxtime = None
+    gui = True
+    maxtime = 0
     filename = None
     nextismaxtime = False
     for arg in sys.argv[1:]:
