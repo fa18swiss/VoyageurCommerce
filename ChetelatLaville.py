@@ -63,6 +63,83 @@ class Solution:
     def __repr__(self):
         return "Solution id = %d distance %d" %(self.__id, self.getDistance())
 
+def croisementSolution(solution1,solution2):
+   solutionF1 = []
+   solutionF2 = []
+
+   villes1 = solution1.getVilles()
+   villes2 = solution2.getVilles()
+
+   #random 0 et size
+   nbRand = random.randrange(len(villes1))
+
+   for i in range(nbRand):
+      solutionF1.append(villes1[i])
+
+   for i in range(nbRand):
+      solutionF2.append(villes2[i])
+
+   for ville in villes2:
+      if solutionF1.count(ville) <= 0:
+         solutionF1.append(ville)
+
+   for ville in villes1:
+      if solutionF2.count(ville) <= 0:
+         solutionF2.append(ville)
+
+   return Solution(solutionF1),Solution(solutionF2)
+
+def croisement(solution1,solution2):
+   solution = []
+
+   villes1 = solution1.getVilles()
+   villes2 = solution2.getVilles()
+   size = len(villes1)
+   indexVille = random.randrange(size)
+
+   while indexVille >= 0:
+
+      ville = villes1[indexVille]
+      if solution.count(ville) <= 0:
+         solution.append(ville)
+
+         if indexVille+1 >= size:
+            villeSuivante1 = villes1[0]
+         else:
+            villeSuivante1 = villes1[indexVille+1]
+
+         index2 = villes2.index(ville)+1
+         if index2 >= size:
+            index2 = 0
+         villeSuivante2 = villes2[index2]
+
+
+         if solution.count(villeSuivante1) <= 0 :
+            if solution.count(villeSuivante2) <= 0 :
+
+               distance1 = ville.distance(villeSuivante1)
+               distance2 = ville.distance(villeSuivante2)
+
+               if distance1 < distance2:
+                  solution.append(villeSuivante1)
+               else:
+                  solution.append(villeSuivante2)
+            else:
+               solution.append(villeSuivante1)
+         elif solution.count(villeSuivante2) <= 0:
+            solution.append(villeSuivante2)
+         else:
+            indexVille = random.randrange(size)
+
+      else:
+         indexVille = random.randrange(size)
+
+      if len(solution) >= size:
+         indexVille = -1
+
+   return Solution(solution)
+
+
 def construirePopulation(villes):
     solutions = []
     solutions.append(Solution(list(villes)))
@@ -112,7 +189,7 @@ def elitisme(solutions):
     solutionsSorted.sort(key=lambda sol: sol.getDistance())
     #print("after")
     #print(solutionsSorted)
-    return solutionsSorted[0:int(len(solutionsSorted)/2)]
+    return solutionsSorted[0:10]
 
 def ga_solve(file=None, gui=True, maxTime=None):
     # controle des paramètres
@@ -239,6 +316,21 @@ def ga_solve(file=None, gui=True, maxTime=None):
     nbSolEquals = 0
     # tant que boucle
     while continueLoop:
+
+        #croisement sol 2
+        tmpSol = []
+        for i in range(nbSolution-1):
+           sol1 = croisement(solutions[i],solutions[i+1])
+           tmpSol.append(sol1)
+        solutions = solutions + tmpSol
+        #croisement solution 1
+        #tmpSol = []
+        #for i in range(nbSolution-1):
+        #   sol1,sol2 = croisementSolution(solutions[i],solutions[i+1])
+        #   tmpSol.append(sol1)
+        #   tmpSol.append(sol2)
+        #solutions = list(tmpSol)
+
         # mutation des solutions
         solutions = mutate(solutions)
         # elitisme
