@@ -115,26 +115,28 @@ def elitisme(solutions):
     return solutionsSorted[0:int(len(solutionsSorted)/2)]
 
 def ga_solve(file=None, gui=True, maxTime=None):
-
-    #gui = False
-    #file = "data/pb010.txt"
-    #maxTime = 5
-
-
-    limitTime = None
-    if maxTime:
-        limitTime = maxTime + time.time()
+    # controle des paramètres
     if not file and not gui:
         raise Exception("No file and no gui !")
 
-    import pygame
-    from pygame.locals import KEYDOWN, QUIT, MOUSEBUTTONDOWN, K_RETURN, K_ESCAPE
-    import sys
+    #temps limite
+    limitTime = None
+    # si maxTime est défini
+    if maxTime:
+        #calcule du temps limite
+        limitTime = maxTime + time.time()
 
+    # importation pygame
+    import pygame
+    from pygame.locals import KEYDOWN, QUIT, MOUSEBUTTONDOWN, K_RETURN
+    import sys
+    # paramètres d'écran
     screen_x = 500
     screen_y = 500
 
-
+    #tableau des villes chargées
+    cities = []
+    #si gui, création fenetre
     if gui:
         city_color = [10,10,200] # blue
         city_radius = 3
@@ -148,6 +150,11 @@ def ga_solve(file=None, gui=True, maxTime=None):
         font_city = pygame.font.Font(None,20)
 
     def draw(villes):
+        """
+        Fonction pour décinner le tableau de ville
+        :param villes: Tableau de villes
+        :return: None
+        """
         screen.fill(0)
         for ville in villes:
             screen.blit(font_city.render(str(ville), True, font_color, ), ville.pos())
@@ -157,6 +164,12 @@ def ga_solve(file=None, gui=True, maxTime=None):
         screen.blit(text, textRect)
         pygame.display.flip()
     def drawSol(solution, i):
+        """
+        Fonction pour dessiner une solution
+        :param solution: Solution
+        :param i: no de l'itération
+        :return: None
+        """
         cities = solution.getVilles()
         screen.fill(0)
         for ville in cities:
@@ -168,85 +181,117 @@ def ga_solve(file=None, gui=True, maxTime=None):
         screen.blit(text, textRect)
         pygame.display.flip()
 
-    cities = []
-    if file:
+    if gui:
+        #si gui, affihage du tableau (même vide
+        draw(cities)
+
+    if file: #si la source est le fichier, ouverture et lecture
         fileReader = open(file, "r")
+        # pour chaque ligne
         for line in fileReader:
+            #suppression caractères inutils
             line = line.replace("\n", "")
-            #print("Line : " + line)
+            #séparation par l'espace
             parts = line.split(" ")
+            # création tableau position
             pos = (int(parts[1]), int(parts[2]))
+            # ajout en tant que ville
             cities.append(Ville(parts[0], pos))
         #print(cities)
         fileReader.close()
-    else:
+    else: # sinon la source est l'utilisateur
         citiesIndex = 0
+        #flag collection
         collecting = True
+        #tant qu'il faut collecter
         while collecting:
+            # pour chaque évènement
             for event in pygame.event.get():
+                # si quit, fin du programme
                 if event.type == QUIT:
                     sys.exit(0)
+                #si touche enter, fin de la collection si le nombre est suffisant
                 elif event.type == KEYDOWN and event.key == K_RETURN:
-                    collecting = False
+                    if len(cities) > 2:
+                        collecting = False
+                # si click souris
                 elif event.type == MOUSEBUTTONDOWN:
                     citiesIndex += 1
+                    #récupération et création d'une ville
                     cities.append(Ville("v%d" % citiesIndex, pygame.mouse.get_pos()))
+                    # affichage
                     draw(cities)
 
-
+    # si le nombre de ville n'est pas suffisant, erreur et arret
     if len(cities) == 0:
         print("Pas de villes !")
-        #todo MggBox
         sys.exit(0)
 
-    solutions = None
-
+    # tableau de solutions initialisé a des chemins aux hazard
+    solutions = construirePopulation(cities)
+    # flag pour la boucle
     continueLoop = True
+    # Nombre d'itération
     i = 1
+    #valeur de la meilleur solution
     lastBestSolDist = float("inf")
+    #nombre d'itération avec la même valeur pour la meilleir solution
     nbSolEquals = 0
+    # tant que boucle
     while continueLoop:
-        if solutions:
-            solutions = mutate(solutions)
-        else:
-            solutions = construirePopulation(cities)
-
+        # mutation des solutions
+        solutions = mutate(solutions)
+        # elitisme
         solutions = elitisme(solutions)
+        # récupération de la meilleur solition, grace à l'élitisme, c'est la 1ere
         bestSolution = solutions[0]
         #print(bestSolution)
+        # affichage de la solution si nécessaire
         if gui:
             drawSol(bestSolution, i)
-        if limitTime:
+        #contrôle du temps
+        if limitTime: #si le temps est limité
+            #contrile que pas dépassé
             if time.time() > limitTime:
                 continueLoop = False
-        else:
+        else:#sinon on parcour attant d'avoir n itération avec la même solution
+            # si la distance est la même que la dernière fois
             if lastBestSolDist == bestSolution.getDistance():
+                # nombre incrémenté
                 nbSolEquals += 1
+                # si > n fin de boucle
                 if nbSolEquals > 1000:
                     continueLoop = False
-            else:
+            else:# si différent, reset
                 nbSolEquals = 0
+            #mag dernière solution
             lastBestSolDist = bestSolution.getDistance()
-
+        #incrémentation
         i += 1
+    # si gui, on affiche la meilleure solutions tant que on n'appiye pas sur une touche
     while gui:
         event = pygame.event.wait()
         if event.type == KEYDOWN or event.type == QUIT: break
+
     if gui:
-        print("end with %s" % bestSolution)
+        print("end with %s (i=%d)" % (bestSolution, i))
     print("%d;" % i, end="")
+    #retour de la meilleur solution ainsi que la liste des nom des villes
     return bestSolution.getDistance(), [v.name() for v in bestSolution.getVilles()]
 
 def main():
-    import sys
+    #Utilise argParse
     import argparse
     parser = argparse.ArgumentParser()
+    #définition des arguments
     parser.add_argument("--no-gui",  help="no graphical user interface", action="store_true")
     parser.add_argument("--maxTime", help="max execution time (seconds)", type=int)
     parser.add_argument("filename",  help="file of cities", nargs='?')
+    # récupération des arguments
     args = parser.parse_args()
-
+    # appel dee la fonction avec les arguments
     dist, cities = ga_solve(args.filename, not args.no_gui, args.maxTime)
+    #affichage
     print("Solve distance = %d" % dist)
 
 if __name__ == "__main__":
