@@ -178,18 +178,14 @@ def mutate(solutions):
                     v1 += 1
                     v2 -= 1
 
-            #print("v1(%d), v2(%d)" % (v1, v2))
         newSols.append(Solution(villesSolution))
     return newSols + solutions
 
 def elitisme(solutions):
     #print("befire :")
-    #print(solutions)
     solutionsSorted = list(solutions)
     solutionsSorted.sort(key=lambda sol: sol.getDistance())
-    #print("after")
-    #print(solutionsSorted)
-    return solutionsSorted[0:10]
+    return solutionsSorted[:nbSolution]
 
 def ga_solve(file=None, gui=True, maxTime=None):
     # controle des paramètres
