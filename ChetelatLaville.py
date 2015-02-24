@@ -363,7 +363,6 @@ def ga_solve(file=None, gui=True, maxTime=None):
 
     if gui:
         print("end with %s (i=%d)" % (bestSolution, i))
-    print("%d;" % i, end="")
     #retour de la meilleur solution ainsi que la liste des nom des villes
     return bestSolution.getDistance(), [v.name() for v in bestSolution.getVilles()]
 
