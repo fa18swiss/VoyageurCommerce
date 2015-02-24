@@ -63,22 +63,25 @@ class Solution:
     def __repr__(self):
         return "Solution id = %d distance %d" %(self.__id, self.getDistance())
 
-def croisementSolution(solution1,solution2):
+def croisementSimple(solution1,solution2):
    solutionF1 = []
    solutionF2 = []
 
+   #Récupération des villes de chaque solution
    villes1 = solution1.getVilles()
    villes2 = solution2.getVilles()
 
    #random 0 et size
    nbRand = random.randrange(len(villes1))
 
+   #Rajouter les villes jusqu'au random
    for i in range(nbRand):
       solutionF1.append(villes1[i])
 
    for i in range(nbRand):
       solutionF2.append(villes2[i])
 
+   #Rajouter les villes manquantes depuis l'autre solution pour compléter la solution
    for ville in villes2:
       if solutionF1.count(ville) <= 0:
          solutionF1.append(ville)
@@ -89,37 +92,49 @@ def croisementSolution(solution1,solution2):
 
    return Solution(solutionF1),Solution(solutionF2)
 
-def croisement(solution1,solution2):
+def croisementComplexe(solution1,solution2):
    solution = []
 
+   #Récupération des villes de chaques solutions
    villes1 = solution1.getVilles()
    villes2 = solution2.getVilles()
    size = len(villes1)
+   #Récupération de l'index d'une ville au hasard
    indexVille = random.randrange(size)
 
+   #Tant qu'il y a des villes
    while indexVille >= 0:
 
+      #Récupération de la ville
       ville = villes1[indexVille]
+      #Si la ville n'existe pas encore dans la solution
       if solution.count(ville) <= 0:
+
+         #Rajouter la ville à la solution
          solution.append(ville)
 
+         #Si l'index de la ville suivante, pour la même solution, n'est pas hors limite
          if indexVille+1 >= size:
             villeSuivante1 = villes1[0]
          else:
             villeSuivante1 = villes1[indexVille+1]
 
+         #Récupérer l'index de la ville suivante pour la solution 2
+         #Vérifier si l'index est hors limite
          index2 = villes2.index(ville)+1
          if index2 >= size:
             index2 = 0
          villeSuivante2 = villes2[index2]
 
-
+         #Test si la ville suivante, de la solution 1 et 2, est déjà dans la solution
          if solution.count(villeSuivante1) <= 0 :
             if solution.count(villeSuivante2) <= 0 :
 
+               #Récupération des distances entre la 1ère ville et les 2 suivantes
                distance1 = ville.distance(villeSuivante1)
                distance2 = ville.distance(villeSuivante2)
 
+               #Rajouter la ville suivante dont la distance est + petite
                if distance1 < distance2:
                   solution.append(villeSuivante1)
                else:
@@ -129,7 +144,10 @@ def croisement(solution1,solution2):
          elif solution.count(villeSuivante2) <= 0:
             solution.append(villeSuivante2)
          else:
+            #Si aucune ville n'a pu être ajouté, commencer avec une nouvelle ville
+            #et supprimé la ville de base rajouté
             indexVille = random.randrange(size)
+            solution.remove(ville)
 
       else:
          indexVille = random.randrange(size)
@@ -142,16 +160,12 @@ def croisement(solution1,solution2):
 
 def construirePopulation(villes):
     solutions = []
+    #Rajouter la population de base
     solutions.append(Solution(list(villes)))
+    #Rajouter des autres populations dans la solution
     for i in range(nbSolution-1):
         villesSolution = list(villes)
-        #print("villes before =", end="")
-        #print(villesSolution)
         random.shuffle(villesSolution)
-
-
-        #print("villes after =", end="")
-        #print(villesSolution)
         solutions.append(Solution(villesSolution))
     return solutions
 
@@ -166,7 +180,7 @@ def mutate(solutions):
             while v1 == v2:
                 v2 = random.randrange(size)
             onlySwap2 = random.randrange(2) == 0
-            #print(onlySwap2)
+
             if onlySwap2:
                 villesSolution[v1], villesSolution[v2] = villesSolution[v2], villesSolution[v1]
             else:
@@ -182,7 +196,6 @@ def mutate(solutions):
     return newSols + solutions
 
 def elitisme(solutions):
-    #print("befire :")
     solutionsSorted = list(solutions)
     solutionsSorted.sort(key=lambda sol: sol.getDistance())
     return solutionsSorted[:nbSolution]
@@ -224,7 +237,7 @@ def ga_solve(file=None, gui=True, maxTime=None):
 
     def draw(villes):
         """
-        Fonction pour décinner le tableau de ville
+        Fonction pour dessiner le tableau de ville
         :param villes: Tableau de villes
         :return: None
         """
@@ -270,7 +283,6 @@ def ga_solve(file=None, gui=True, maxTime=None):
             pos = (int(parts[1]), int(parts[2]))
             # ajout en tant que ville
             cities.append(Ville(parts[0], pos))
-        #print(cities)
         fileReader.close()
     else: # sinon la source est l'utilisateur
         citiesIndex = 0
@@ -313,33 +325,35 @@ def ga_solve(file=None, gui=True, maxTime=None):
     # tant que boucle
     while continueLoop:
 
-        #croisement sol 2
+        #Croisement Complexe
+        """
         tmpSol = []
         for i in range(nbSolution-1):
-           sol1 = croisement(solutions[i],solutions[i+1])
+           sol1 = croisementComplexe(solutions[i],solutions[i+1])
            tmpSol.append(sol1)
         solutions = solutions + tmpSol
-        #croisement solution 1
-        #tmpSol = []
-        #for i in range(nbSolution-1):
-        #   sol1,sol2 = croisementSolution(solutions[i],solutions[i+1])
-        #   tmpSol.append(sol1)
-        #   tmpSol.append(sol2)
-        #solutions = list(tmpSol)
-
+        """
+        #Croisement Simple
+        """
+        tmpSol = []
+        for i in range(nbSolution-1):
+           sol1,sol2 = croisementSimple(solutions[i],solutions[i+1])
+           tmpSol.append(sol1)
+           tmpSol.append(sol2)
+        solutions = list(tmpSol)
+        """
         # mutation des solutions
         solutions = mutate(solutions)
         # elitisme
         solutions = elitisme(solutions)
         # récupération de la meilleur solition, grace à l'élitisme, c'est la 1ere
         bestSolution = solutions[0]
-        #print(bestSolution)
         # affichage de la solution si nécessaire
         if gui:
             drawSol(bestSolution, i)
         #contrôle du temps
         if limitTime: #si le temps est limité
-            #contrile que pas dépassé
+            #controle que pas dépassé
             if time.time() > limitTime:
                 continueLoop = False
         else:#sinon on parcour attant d'avoir n itération avec la même solution
