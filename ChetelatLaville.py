@@ -6,6 +6,7 @@ import time
 
 random.seed()
 
+#Variable déterminant le nombre de solution a garder
 nbSolution = 10
 
 class Ville:
@@ -64,6 +65,11 @@ class Solution:
         return "Solution id = %d distance %d" %(self.__id, self.getDistance())
 
 def croisementSimple(solution1,solution2):
+   """
+   Fonction de croisement simple
+   :param solution1, solution2: Solution, Solution
+   :return solutionF1, solutionF2: Solution, Solution
+   """
    solutionF1 = []
    solutionF2 = []
 
@@ -93,72 +99,102 @@ def croisementSimple(solution1,solution2):
    return Solution(solutionF1),Solution(solutionF2)
 
 def croisementComplexe(solution1,solution2):
+   """
+   Fonction de croisement complexe
+   :param solution1, solution2: Solution, Solution
+   :return solution: Solution
+   """
    solution = []
 
-   #Récupération des villes de chaques solutions
+   #Récupération des villes de chaque solution
    villes1 = solution1.getVilles()
    villes2 = solution2.getVilles()
    size = len(villes1)
-   #Récupération de l'index d'une ville au hasard
-   indexVille = random.randrange(size)
 
-   #Tant qu'il y a des villes
-   while indexVille >= 0:
+   #Définit l'index de la 1ere ville aléatoirement
+   indexFirstVille = random.randrange(size)
 
-      #Récupération de la ville
-      ville = villes1[indexVille]
-      #Si la ville n'existe pas encore dans la solution
-      if solution.count(ville) <= 0:
+   #Tant que la solution n'est pas complète
+   while len(solution) < size:
 
-         #Rajouter la ville à la solution
-         solution.append(ville)
+         #Récupérer la 1ère ville
+         firstVille = villes1[indexFirstVille]
+         nextVille = 0
 
-         #Si l'index de la ville suivante, pour la même solution, n'est pas hors limite
-         if indexVille+1 >= size:
-            villeSuivante1 = villes1[0]
+         #Si la 1ere ville ne fait pas partie de la solution, chercher ses villes suivantes
+         if firstVille not in solution:
+            nextVille = chercheVilleSuivante(firstVille,solution,size,villes1,villes2)
+            solution.append(firstVille)
+            solution.append(nextVille)
+            indexFirstVille = villes1.index(nextVille)
+         #Si la ville est présent dans la solution mais qu'elle est la dernière, chercher ses villes suivantes
+         elif solution[-1] == firstVille:
+            nextVille = chercheVilleSuivante(firstVille,solution,size,villes1,villes2)
+            solution.append(nextVille)
+            indexFirstVille = villes1.index(nextVille)
+         #Sinon recommencer avec une autre ville
          else:
-            villeSuivante1 = villes1[indexVille+1]
-
-         #Récupérer l'index de la ville suivante pour la solution 2
-         #Vérifier si l'index est hors limite
-         index2 = villes2.index(ville)+1
-         if index2 >= size:
-            index2 = 0
-         villeSuivante2 = villes2[index2]
-
-         #Test si la ville suivante, de la solution 1 et 2, est déjà dans la solution
-         if solution.count(villeSuivante1) <= 0 :
-            if solution.count(villeSuivante2) <= 0 :
-
-               #Récupération des distances entre la 1ère ville et les 2 suivantes
-               distance1 = ville.distance(villeSuivante1)
-               distance2 = ville.distance(villeSuivante2)
-
-               #Rajouter la ville suivante dont la distance est + petite
-               if distance1 < distance2:
-                  solution.append(villeSuivante1)
-               else:
-                  solution.append(villeSuivante2)
-            else:
-               solution.append(villeSuivante1)
-         elif solution.count(villeSuivante2) <= 0:
-            solution.append(villeSuivante2)
-         else:
-            #Si aucune ville n'a pu être ajouté, commencer avec une nouvelle ville
-            #et supprimé la ville de base rajouté
-            indexVille = random.randrange(size)
-            solution.remove(ville)
-
-      else:
-         indexVille = random.randrange(size)
-
-      if len(solution) >= size:
-         indexVille = -1
+            indexFirstVille = random.randrange(size)
 
    return Solution(solution)
 
 
+def chercheVilleSuivante(firstVille, solution,size,villes1,villes2):
+   """
+   Fonction de recherche de la ville suivante pour croisement complexe
+   :param ville,solution,size,villes1,villes2: Ville,Solution,int,List<Ville>,List<Ville>
+   :return solutions: List<Solution>
+   """
+   nextVille = 0
+
+   #Si l'index de la ville suivante, pour la même solution, n'est pas hors limite
+   index1 = villes1.index(firstVille)+1
+   if index1 >= size:
+      index1 = 0
+   villeSuivante1 = villes1[index1]
+
+   #Récupérer l'index de la ville suivante pour la solution 2
+   #Vérifier si l'index est hors limite
+   index2 = villes2.index(firstVille)+1
+   if index2 >= size:
+      index2 = 0
+   villeSuivante2 = villes2[index2]
+
+   #Tant qu'il n'y a pas au moins 1 ville qui n'est pas encore présent dans la solution
+   while villeSuivante1 in solution and villeSuivante2 in solution:
+      if villeSuivante1 in solution:
+         villeSuivante1 = villes1[random.randrange(size)]
+      if villeSuivante2 in solution:
+         villeSuivante2 = villes2[random.randrange(size)]
+
+   distance1 = -1
+   distance2 = -1
+
+   if villeSuivante1 not in solution:
+      distance1 = firstVille.distance(villeSuivante1)
+   if villeSuivante2 not in solution:
+      distance2 = firstVille.distance(villeSuivante2)
+
+   if distance1 != -1:
+      if distance2 != -1:
+         if distance1 > distance2:
+            nextVille = villeSuivante2
+         else:
+            nextVille = villeSuivante1
+      else:
+         nextVille = villeSuivante1
+   else:
+      nextVille = villeSuivante2
+
+   return nextVille
+
 def construirePopulation(villes):
+    """
+    Fonction de construction de la population
+    :param villes: List<Ville>
+    :return solutions: List<Solution>
+    """
+
     solutions = []
     #Rajouter la population de base
     solutions.append(Solution(list(villes)))
@@ -170,6 +206,11 @@ def construirePopulation(villes):
     return solutions
 
 def mutate(solutions):
+    """
+    Fonction de mutation
+    :param solution: Solution
+    :return solution: Solution
+    """
     newSols = []
     for solution in solutions:
         villesSolution = list(solution.getVilles())
@@ -196,9 +237,14 @@ def mutate(solutions):
     return newSols + solutions
 
 def elitisme(solutions):
-    solutionsSorted = list(solutions)
-    solutionsSorted.sort(key=lambda sol: sol.getDistance())
-    return solutionsSorted[:nbSolution]
+   """
+   Fonction de selection de type élitisme
+   :param solution: Solution
+   :return solution: Solution
+   """
+   solutionsSorted = list(solutions)
+   solutionsSorted.sort(key=lambda sol: sol.getDistance())
+   return solutionsSorted[:nbSolution]
 
 def ga_solve(file=None, gui=True, maxTime=None):
     # controle des paramètres
@@ -325,6 +371,13 @@ def ga_solve(file=None, gui=True, maxTime=None):
     # tant que boucle
     while continueLoop:
 
+        """
+        Suite à plusieurs tests de performances,
+        nous avons remarqué que notre algorithme génétique donnait de meilleurs résultats
+        avec seulement des mutations.
+        C'est pour cela que nous avons implémentés les croisements, 1 simple et l'autre plus complexe,
+        mais que l'on ne les appelle pas
+        """
         #Croisement Complexe
         """
         tmpSol = []
